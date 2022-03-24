@@ -109,7 +109,9 @@ function Get-SecretObject {
         }
         if (!$SecretInfo){
             if ($ReturnInfo['Value'] -eq 'PSCredential'){
-                $Json = $KeyVaultSecret.SecretValueText | ConvertFrom-Json
+                $Json = $KeyVaultSecret.SecretValue
+                | ConvertFrom-SecureString -AsPlainText
+                | ConvertFrom-Json
                 $ReturnInfo = [pscredential]::new($Json.UserName,$($Json.Password | ConvertTo-SecureString -AsPlainText -Force))
             } else {
                 $ReturnInfo = $KeyVaultSecret.SecretValue
@@ -119,7 +121,7 @@ function Get-SecretObject {
     }
     
     end {
-        $Json = $ReturnInfo = $null
+        $UserName = $ReturnInfo = $null
     }
 }
 function Remove-Secret
