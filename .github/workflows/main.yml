@@ -23,18 +23,16 @@ jobs:
       - name: Install the module
         run: |
           Write-Host $Env:GITHUB_REF
-          $ModuleName = (Get-Item -Path $(pwd).Path).Name
+          $ModulePath = (Get-ItemChildItem -Path $(pwd).Path -Directory Ax*).FullName
           echo "MODULE_NAME=$ModuleName" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
-          Write-Host "Path: $(pwd)"
-          #Import-Module $(pwd)
-
-          Get-Module $ModuleName
+          Write-Host "Path: $ModulePath"
+          Import-Module $ModulePath
+          Get-Module (Get-Item $ModulePath).Name
         shell: pwsh
 
       - name: Publish to Powershell Gallery
         run: |
           Write-Host $Env:MODULE_NAME
-          Import-Module $(pwd)
-          Get-Module $Env:MODULE_NAME 
-          Publish-Module -Name $(pwd) -NuGetApiKey "${{ secrets.PSGALLERYKEY }}"
+          $ModulePath = (Get-ItemChildItem -Path $(pwd).Path -Directory Ax*).FullName
+          #Publish-Module -Name $ModulePath -NuGetApiKey "${{ secrets.PSGALLERYKEY }}"
         shell: pwsh

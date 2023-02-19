@@ -57,6 +57,7 @@ function Get-Secret
 }
 function Get-SecretInfo
 {
+    [CmdletBinding()]
     param (
         [string] $Filter,
         [string] $VaultName,
@@ -65,6 +66,7 @@ function Get-SecretInfo
     begin {
         # Set context
         $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName 
+        $AdditionalParameters |ConvertTo-Json |Write-Verbose -Verbose
     }
     
     process {
@@ -192,9 +194,24 @@ function Set-Secret
 }
 function Test-SecretVault
 {
+    [CmdletBinding()]
     param (
         [string] $VaultName,
         [hashtable] $AdditionalParameters
     )
-    return $true
+    begin {
+                # Set context
+                $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName 
+                $AdditionalParameters | ConvertTo-Json | Write-Verbose -Verbose
+    }
+    process {
+        $kv = Get-AzKeyVault -VaultName $AdditionalParameters.KeyVaultName
+    }
+    end {
+        if ($Info.Reset){
+            $null = Set-AzContext $Info.InitialContext
+        }
+        return ($null -ne $kv )
+    }
+    
 }
