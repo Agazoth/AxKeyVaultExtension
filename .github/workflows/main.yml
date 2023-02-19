@@ -33,5 +33,5 @@ jobs:
         run: |
           Write-Host $Env:MODULE_NAME 
           # Publish-Module -Name $Env:MODULE_NAME -NuGetApiKey ${{ secrets.PSGALLERYKEY }}
-          Get-Command -Module $ModuleName
+          Get-Command -Module $Env:MODULE_NAME 
         shell: pwsh
