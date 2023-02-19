@@ -12,13 +12,13 @@
 # RootModule = ''
 
 # Version number of this module.
-ModuleVersion = '1.4.0'
+ModuleVersion = '1.5.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
 
 # ID used to uniquely identify this module
-GUID = '5a13d00f-c90d-4919-85e6-8f090ff12a76'
+GUID = '5a13d00f-c90d-4919-85e6-8f090ff12666'
 
 # Author of this module
 Author = 'Axel B Andersen'
@@ -30,7 +30,7 @@ CompanyName = 'Carnaperium'
 Copyright = '(c) Axel B Andersen. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'This module is an extension for Microsoft PowerShell Secrets Management that makes it possible to store and retrieve secrets and credentials from an Azure Key Vault'
+Description = 'This module is an extension for Microsoft PowerShell Secret Management that makes it possible to store and retrieve secrets and credentials from an Azure Key Vault'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = ''

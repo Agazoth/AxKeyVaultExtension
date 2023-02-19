@@ -3,22 +3,20 @@ function Connect-AzVault {
     param (
         # Please make sure the AzContext is available for the current user
         [Parameter(Mandatory = $true)]
-        $ContextName,
-        [Parameter(Mandatory = $true)]
-        $VaultName
+        $ContextName
     )
     
     begin {
-        $InitialContext = Get-AzContext        
+        $InitialContext = Get-AzContext
     }
     
     process {
         if ($InitialContext.Name -ne $ContextName) {
             $RequiredContext = Get-AzContext $ContextName
             if (!$RequiredContext) {
-                throw "$ContextName not found! You must be logged in to your subscription and allow autosave."
+                throw "$ContextName not found! You must be logged in to your subscription and Enable AzContext Autosave."
             }
-            $SetContext = Set-AzContext $RequiredContext
+            $SetContext = Select-AzContext -Name $ContextName
             $reset = $true
         }
         else { $reset = $false }
@@ -26,7 +24,7 @@ function Connect-AzVault {
     
     end {
         # Send the original context to the pipeline
-        return [pscustomobject]@{VaultName = $VaultName; InitialContext = $InitialContext; Reset = $reset }
+        return [pscustomobject]@{ InitialContext = $InitialContext; Reset = $reset }
     }
 }
 function Get-Secret
@@ -34,15 +32,16 @@ function Get-Secret
     [CmdletBinding()]
     param (
         [string] $Name,
+        [string] $VaultName,
         [hashtable] $AdditionalParameters
     )
     begin {
         # Set context
-        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName -VaultName $AdditionalParameters.VaultName
+        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName
     }
     
     process {
-        $secret = Get-AzKeyVaultSecret -VaultName $Info.VaultName -Name $Name
+        $secret = Get-AzKeyVaultSecret -VaultName $AdditionalParameters.KeyVaultName -Name $Name
         if ($secret){
             $s = Get-SecretObject -KeyVaultSecret $secret
             return $s
@@ -60,20 +59,26 @@ function Get-SecretInfo
 {
     param (
         [string] $Filter,
+        [string] $VaultName,
         [hashtable] $AdditionalParameters
     )
     begin {
         # Set context
-        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName -VaultName $AdditionalParameters.VaultName
+        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName 
     }
     
     process {
         $pattern = [WildcardPattern]::new($Filter)
-        $VaultSecrets = Get-AzKeyVaultSecret -VaultName $Info.VaultName
+        $VaultSecrets = Get-AzKeyVaultSecret -VaultName $AdditionalParameters.KeyVaultName
         foreach ($vs in $VaultSecrets) {
             if ($pattern.IsMatch($vs.Name)) {
                 $st = Get-SecretObject -KeyVaultSecret $vs -SecretInfo
-                Write-Output ([pscustomobject]$st)
+                Write-Output (
+                    [Microsoft.PowerShell.SecretManagement.SecretInformation]::new(
+                        $vs.Name,
+                        $st.Value,
+                        $VaultName)
+                )
             }
         }
     }
@@ -121,24 +126,25 @@ function Get-SecretObject {
     }
     
     end {
-        $UserName = $ReturnInfo = $null
+        $Json = $ReturnInfo = $null
     }
 }
 function Remove-Secret
 {
     param (
         [string] $Name,
+        [string] $VaultName,
         [hashtable] $AdditionalParameters
     )
     begin {
         # Set context
-        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName -VaultName $AdditionalParameters.VaultName
+        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName
     }
     
     process {
-        $Secret = Get-AzKeyVaultSecret -VaultName $Info.VaultName -Name $Name
+        $Secret = Get-AzKeyVaultSecret -VaultName $AdditionalParameters.KeyVaultName -Name $Name
         if ($Secret){
-            $null = Remove-AzKeyVaultSecret -VaultName $Info.VaultName -Name $Secret.Name -Force
+            $null = Remove-AzKeyVaultSecret -VaultName $AdditionalParameters.KeyVaultName -Name $Secret.Name -Force
         }
         return $?
     }
@@ -154,17 +160,18 @@ function Set-Secret
     param (
         [string] $Name,
         [object] $Secret,
+        [string] $VaultName,
         [hashtable] $AdditionalParameters
     )
     begin {
         # Set context
-        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName -VaultName $AdditionalParameters.VaultName
+        $Info = Connect-AzVault -ContextName $AdditionalParameters.ContextName
         $Tag = @{AxKeyVaultExtension='SecureString'}
     }
     
     process {
         if ($Secret -is [String]){
-            $Secret = $Secret | ConvertTo-SecureString -AsPlainText -Force
+            $SecretString = $Secret | ConvertTo-SecureString -AsPlainText -Force
         }
         if ($Secret -is [PSCredential]){
             $SecretString = @{
@@ -173,7 +180,7 @@ function Set-Secret
             } | ConvertTo-Json -Compress | ConvertTo-SecureString -AsPlainText -Force
             $Tag.AxKeyVaultExtension = 'PSCredential'
         }
-        $null = Set-AzKeyVaultSecret -VaultName $Info.VaultName -Name $Name -SecretValue $SecretString -Tag $Tag
+        $null = Set-AzKeyVaultSecret -VaultName $AdditionalParameters.KeyVaultName -Name $Name -SecretValue $SecretString -Tag $Tag
         return $?
     }
     
@@ -182,4 +189,12 @@ function Set-Secret
             $null = Set-AzContext $Info.InitialContext
         }
     }
+}
+function Test-SecretVault
+{
+    param (
+        [string] $VaultName,
+        [hashtable] $AdditionalParameters
+    )
+    return $true
 }
