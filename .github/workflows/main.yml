@@ -28,6 +28,7 @@ jobs:
           Write-Host "Path: $(pwd)"
           Import-Module $(pwd)
           Get-Module $ModuleName
+          Write-Host "Path: $($env:PSModulePath)"
         shell: pwsh
 
       - name: Publish to Powershell Gallery
@@ -35,5 +36,5 @@ jobs:
           Write-Host $Env:MODULE_NAME
           Import-Module $(pwd)
           Get-Module $Env:MODULE_NAME 
-          Publish-Module -Name $Env:MODULE_NAME -NuGetApiKey "${{ secrets.PSGALLERYKEY }}"
+          #Publish-Module -Name $Env:MODULE_NAME -NuGetApiKey "${{ secrets.PSGALLERYKEY }}"
         shell: pwsh
