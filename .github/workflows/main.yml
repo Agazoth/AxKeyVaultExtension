@@ -7,6 +7,9 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   pull_request:
     branches: [ master ]
+  push:
+    branches:
+      - 'master'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -23,8 +26,8 @@ jobs:
       - name: Install the module
         run: |
           Write-Host $Env:GITHUB_REF
-          $ModulePath = (Get-ItemChildItem -Path $(pwd).Path -Directory Ax*).FullName
-          echo "MODULE_NAME=$ModuleName" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+          $ModulePath = (Get-ChildItem -Path $(pwd).Path -Directory Ax*).FullName
+          echo "MODULE_PATH=$ModulePath" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
           Write-Host "Path: $ModulePath"
           Import-Module $ModulePath
           Get-Module (Get-Item $ModulePath).Name
@@ -32,7 +35,7 @@ jobs:
 
       - name: Publish to Powershell Gallery
         run: |
-          Write-Host $Env:MODULE_NAME
-          $ModulePath = (Get-ItemChildItem -Path $(pwd).Path -Directory Ax*).FullName
+          $ModulePath = $Env:MODULE_PATH
+          Write-Host $ModulePath
           #Publish-Module -Name $ModulePath -NuGetApiKey "${{ secrets.PSGALLERYKEY }}"
         shell: pwsh
