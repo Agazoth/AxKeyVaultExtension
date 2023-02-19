@@ -15,6 +15,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment: production
     steps:
         # Check out the main branch
       - uses: actions/checkout@master
@@ -30,11 +31,9 @@ jobs:
         shell: pwsh
 
       - name: Publish to Powershell Gallery
-        env:
-          PSGalleryKey: ${{ secrets.PSGALLERYKEY }}
         run: |
           Write-Host $Env:MODULE_NAME
           Import-Module $(pwd)
           Get-Module $Env:MODULE_NAME 
-          Publish-Module -Name $Env:MODULE_NAME -NuGetApiKey "$env:PSGalleryKey"
+          Publish-Module -Name $Env:MODULE_NAME -NuGetApiKey "${{ secrets.PSGALLERYKEY }}""
         shell: pwsh
